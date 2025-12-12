@@ -6,7 +6,6 @@ import com.sentinelai.tak.plugin.network.dto.LocationDto
 import com.sentinelai.tak.plugin.network.dto.MissionAnalysisRequestDto
 import com.sentinelai.tak.plugin.network.dto.SignalDto
 import com.sentinelai.tak.plugin.network.dto.TimeWindowDto
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 /**
@@ -59,5 +58,3 @@ class MissionRequestBuilder(private val formatter: DateTimeFormatter = DateTimeF
         )
     }
 }
-
-data class MissionTimeWindow(val start: OffsetDateTime, val end: OffsetDateTime)

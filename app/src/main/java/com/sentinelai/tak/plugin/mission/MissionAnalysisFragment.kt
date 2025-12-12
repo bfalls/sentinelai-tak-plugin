@@ -10,15 +10,17 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.sentinelai.tak.plugin.R
+import com.sentinelai.tak.plugin.analysis.MissionContextBuilder
+import com.sentinelai.tak.plugin.analysis.MissionTimeWindow
 import com.sentinelai.tak.plugin.config.SentinelConfigRepository
+import com.sentinelai.tak.plugin.context.DefaultTakContextProvider
+import com.sentinelai.tak.plugin.context.MissionContextStore
+import com.sentinelai.tak.plugin.context.MarkerContext
 import com.sentinelai.tak.plugin.databinding.FragmentMissionAnalysisBinding
 import com.sentinelai.tak.plugin.network.SentinelApiClient
 import com.sentinelai.tak.plugin.network.SentinelApiException
-import com.sentinelai.tak.plugin.network.dto.LocationDto
 import com.sentinelai.tak.plugin.network.dto.MissionAnalysisRequestDto
 import com.sentinelai.tak.plugin.network.dto.MissionAnalysisResponseDto
-import com.sentinelai.tak.plugin.network.dto.SignalDto
-import com.sentinelai.tak.plugin.network.dto.TimeWindowDto
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -29,7 +31,6 @@ class MissionAnalysisFragment : Fragment() {
     private var _binding: FragmentMissionAnalysisBinding? = null
     private val binding get() = _binding!!
 
-    private val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
     private val displayFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm z")
 
@@ -41,6 +42,10 @@ class MissionAnalysisFragment : Fragment() {
 
     private val configRepository by lazy { SentinelConfigRepository(requireContext()) }
     private val apiClient by lazy { SentinelApiClient(configRepository) }
+    private val takContextProvider by lazy { DefaultTakContextProvider() }
+    private val missionContextBuilder by lazy { MissionContextBuilder(takContextProvider) }
+
+    private var preselectedMarkers: List<MarkerContext> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +63,12 @@ class MissionAnalysisFragment : Fragment() {
         binding.startTimeValue.setOnClickListener { selectDateTime(isStart = true) }
         binding.endTimeValue.setOnClickListener { selectDateTime(isStart = false) }
         binding.analyzeButton.setOnClickListener { submitAnalysis() }
+
+        preselectedMarkers = MissionContextStore.getPreloadedMarkers()
+        if (preselectedMarkers.isNotEmpty()) {
+            binding.includeMarkersToggle.isChecked = true
+            MissionContextStore.clearPreloadedMarkers()
+        }
 
         updateTimeLabels()
     }
@@ -160,37 +171,19 @@ class MissionAnalysisFragment : Fragment() {
         ensureTimeWindowOrder()
         updateTimeLabels()
 
-        return MissionAnalysisRequestDto(
-            missionId = null,
-            missionMetadata = mapOf(
-                "include_markers" to binding.includeMarkersToggle.isChecked,
-                "include_map_extent" to includeMapExtent,
-                "include_mission_notes" to includeNotes,
-                "question" to question,
-            ),
-            signals = listOf(
-                SignalDto(
-                    type = "USER_QUERY",
-                    description = question,
-                    timestamp = isoFormatter.format(ZonedDateTime.now(ZoneOffset.UTC)),
-                    metadata = mapOf("source" to "mission_analysis_panel"),
-                ),
-            ),
-            notes = if (includeNotes) getString(R.string.mission_analysis_placeholder_notes) else null,
-            location = if (includeMapExtent) {
-                LocationDto(
-                    latitude = 0.0,
-                    longitude = 0.0,
-                    description = getString(R.string.mission_analysis_placeholder_location),
-                )
-            } else {
-                null
-            },
-            timeWindow = TimeWindowDto(
-                start = isoFormatter.format(startTime),
-                end = isoFormatter.format(endTime),
-            ),
-            intent = null,
+        val timeWindow = MissionTimeWindow(
+            start = startTime.withZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime(),
+            end = endTime.withZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime(),
+        )
+
+        return missionContextBuilder.buildMissionAnalysisRequest(
+            question = question,
+            includeSelectedMarkers = binding.includeMarkersToggle.isChecked,
+            includeMapExtent = includeMapExtent,
+            includeMissionNotes = includeNotes,
+            timeWindow = timeWindow,
+            selectedMarkers = preselectedMarkers,
+            source = "mission_analysis_panel",
         )
     }
 
