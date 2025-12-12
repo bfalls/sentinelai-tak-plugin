@@ -14,4 +14,26 @@
     <string name="sentinel_cancel">Cancel</string>
     <string name="sentinel_settings_saved">Settings saved</string>
     <string name="sentinel_timeout_validation_error">Please enter a valid timeout (seconds)</string>
+
+    <!-- Mission analysis -->
+    <string name="mission_analysis_title">Mission Analysis</string>
+    <string name="mission_analysis_question_hint">What do you want SentinelAI to analyze?</string>
+    <string name="mission_analysis_inclusions_label">Include in request</string>
+    <string name="mission_analysis_include_markers">Include markers</string>
+    <string name="mission_analysis_include_map_extent">Include map extent</string>
+    <string name="mission_analysis_include_mission_notes">Include mission notes</string>
+    <string name="mission_analysis_time_window">Time window</string>
+    <string name="mission_analysis_time_start">Start</string>
+    <string name="mission_analysis_time_end">End</string>
+    <string name="mission_analysis_analyze">Analyze</string>
+    <string name="mission_analysis_history_title">Recent analyses</string>
+    <string name="mission_analysis_analyzing">Analyzing…</string>
+    <string name="mission_analysis_status_completed">Completed</string>
+    <string name="mission_analysis_status_failed">Failed</string>
+    <string name="mission_analysis_error_missing_question">Please enter a question for SentinelAI.</string>
+    <string name="mission_analysis_placeholder_notes">Mission notes placeholder</string>
+    <string name="mission_analysis_placeholder_location">Current map center placeholder</string>
+    <string name="mission_analysis_intent_label">Intent: %1$s</string>
+    <string name="mission_analysis_risks_label">Risks</string>
+    <string name="mission_analysis_recommendations_label">Recommendations</string>
 </resources>
