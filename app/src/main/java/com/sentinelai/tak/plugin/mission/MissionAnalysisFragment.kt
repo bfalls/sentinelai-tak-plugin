@@ -18,6 +18,7 @@ import com.sentinelai.tak.plugin.context.MissionContextStore
 import com.sentinelai.tak.plugin.context.MarkerContext
 import com.sentinelai.tak.plugin.databinding.FragmentMissionAnalysisBinding
 import com.sentinelai.tak.plugin.network.SentinelApiClient
+import com.sentinelai.tak.plugin.network.SentinelApiErrorKind
 import com.sentinelai.tak.plugin.network.SentinelApiException
 import com.sentinelai.tak.plugin.network.dto.MissionAnalysisRequestDto
 import com.sentinelai.tak.plugin.network.dto.MissionAnalysisResponseDto
@@ -136,10 +137,7 @@ class MissionAnalysisFragment : Fragment() {
                 val response = apiClient.analyzeMission(request)
                 updateHistoryItem(pendingItem, response = response)
             } catch (ex: Exception) {
-                val errorMessage = when (ex) {
-                    is SentinelApiException -> ex.message ?: getString(R.string.mission_analysis_status_failed)
-                    else -> ex.localizedMessage ?: getString(R.string.mission_analysis_status_failed)
-                }
+                val errorMessage = readableError(ex)
                 binding.errorMessage.text = errorMessage
                 binding.errorMessage.isVisible = true
                 updateHistoryItem(pendingItem, error = errorMessage)
@@ -201,6 +199,22 @@ class MissionAnalysisFragment : Fragment() {
     private fun updateTimeLabels() {
         binding.startTimeValue.text = displayFormatter.format(startTime)
         binding.endTimeValue.text = displayFormatter.format(endTime)
+    }
+
+    private fun readableError(ex: Exception): String {
+        val genericFailure = getString(R.string.mission_analysis_status_failed)
+        if (ex !is SentinelApiException) {
+            return ex.localizedMessage ?: genericFailure
+        }
+
+        return when (ex.kind) {
+            SentinelApiErrorKind.CONFIG -> getString(R.string.mission_analysis_error_config)
+            SentinelApiErrorKind.NETWORK -> getString(R.string.mission_analysis_error_network)
+            SentinelApiErrorKind.TIMEOUT -> getString(R.string.mission_analysis_error_timeout)
+            SentinelApiErrorKind.BACKEND, SentinelApiErrorKind.PARSE ->
+                getString(R.string.mission_analysis_error_backend)
+            SentinelApiErrorKind.UNKNOWN -> ex.message ?: genericFailure
+        }
     }
 
     companion object {

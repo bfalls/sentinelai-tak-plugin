@@ -19,7 +19,21 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class SentinelApiException(message: String, cause: Throwable? = null) : Exception(message, cause)
+enum class SentinelApiErrorKind {
+    CONFIG,
+    NETWORK,
+    BACKEND,
+    TIMEOUT,
+    PARSE,
+    UNKNOWN,
+}
+
+class SentinelApiException(
+    val kind: SentinelApiErrorKind,
+    message: String,
+    cause: Throwable? = null,
+    val statusCode: Int? = null,
+) : Exception(message, cause)
 
 class SentinelApiClient(
     private val configRepository: SentinelConfigRepository,
@@ -33,8 +47,8 @@ class SentinelApiClient(
         moshi.adapter(MissionAnalysisResponseDto::class.java)
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
-    suspend fun healthCheck(): Boolean = withContext(Dispatchers.IO) {
-        val config = configRepository.load()
+    suspend fun healthCheck(configOverride: SentinelConfig? = null): Boolean = withContext(Dispatchers.IO) {
+        val config = configOverride ?: configRepository.load()
         val client = clientForConfig(config)
         val url = buildUrl(config.backendUrl, "/healthz")
         val request = Request.Builder()
@@ -42,11 +56,19 @@ class SentinelApiClient(
             .get()
             .build()
 
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw SentinelApiException("Health check failed with HTTP ${'$'}{response.code}")
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    throw SentinelApiException(
+                        kind = SentinelApiErrorKind.BACKEND,
+                        message = "Health check failed with HTTP ${'$'}{response.code}",
+                        statusCode = response.code,
+                    )
+                }
+                true
             }
-            true
+        } catch (ex: IOException) {
+            throw classifyNetworkException(ex)
         }
     }
 
@@ -69,41 +91,73 @@ class SentinelApiClient(
             }
 
             val httpRequest = requestBuilder.build()
-            client.newCall(httpRequest).execute().use { response ->
-                if (!response.isSuccessful) {
-                    val errorBody = response.body?.string().orEmpty()
-                    throw SentinelApiException(
-                        "Mission analysis failed with HTTP ${'$'}{response.code}: ${'$'}{errorBody.take(200)}",
-                    )
-                }
+            try {
+                client.newCall(httpRequest).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        val errorBody = response.body?.string().orEmpty()
+                        throw SentinelApiException(
+                            kind = SentinelApiErrorKind.BACKEND,
+                            message = "Mission analysis failed with HTTP ${'$'}{response.code}",
+                            statusCode = response.code,
+                            cause = null,
+                        ).attachBackendDetails(errorBody)
+                    }
 
-                val responseBody = response.body?.string()
-                    ?: throw SentinelApiException("Mission analysis response was empty")
+                    val responseBody = response.body?.string()
+                        ?: throw SentinelApiException(
+                            kind = SentinelApiErrorKind.BACKEND,
+                            message = "Mission analysis response was empty",
+                        )
 
-                try {
-                    responseAdapter.fromJson(responseBody)
-                        ?: throw SentinelApiException("Unable to parse mission analysis response")
-                } catch (ex: JsonDataException) {
-                    throw SentinelApiException("Malformed mission analysis response", ex)
-                } catch (ex: IOException) {
-                    throw SentinelApiException("Failed reading mission analysis response", ex)
+                    val parsedResponse = try {
+                        responseAdapter.fromJson(responseBody)
+                            ?: throw SentinelApiException(
+                                kind = SentinelApiErrorKind.PARSE,
+                                message = "Unable to parse mission analysis response",
+                            )
+                    } catch (ex: JsonDataException) {
+                        throw SentinelApiException(
+                            kind = SentinelApiErrorKind.PARSE,
+                            message = "Malformed mission analysis response",
+                            cause = ex,
+                        )
+                    } catch (ex: IOException) {
+                        throw SentinelApiException(
+                            kind = SentinelApiErrorKind.UNKNOWN,
+                            message = "Failed reading mission analysis response",
+                            cause = ex,
+                        )
+                    }
+
+                    parsedResponse
                 }
+            } catch (ex: IOException) {
+                throw classifyNetworkException(ex)
             }
         }
 
     private fun clientForConfig(config: SentinelConfig): OkHttpClient {
         if (config.backendUrl.isBlank()) {
-            throw SentinelApiException("Backend URL is not configured")
+            throw SentinelApiException(
+                kind = SentinelApiErrorKind.CONFIG,
+                message = "Backend URL is not configured",
+            )
         }
 
         return baseClient.newBuilder()
             .callTimeout(config.requestTimeoutSeconds.toLong(), TimeUnit.SECONDS)
+            .connectTimeout(config.requestTimeoutSeconds.toLong(), TimeUnit.SECONDS)
+            .readTimeout(config.requestTimeoutSeconds.toLong(), TimeUnit.SECONDS)
+            .writeTimeout(config.requestTimeoutSeconds.toLong(), TimeUnit.SECONDS)
             .build()
     }
 
     private fun buildUrl(baseUrl: String, path: String): HttpUrl {
         val url = baseUrl.toHttpUrlOrNull()
-            ?: throw SentinelApiException("Invalid backend URL: ${'$'}baseUrl")
+            ?: throw SentinelApiException(
+                kind = SentinelApiErrorKind.CONFIG,
+                message = "Invalid backend URL",
+            )
 
         return url.newBuilder()
             .addPathSegments(path.trimStart('/'))
@@ -116,5 +170,28 @@ class SentinelApiClient(
         fun defaultMoshi(): Moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
+    }
+
+    private fun classifyNetworkException(ex: IOException): SentinelApiException {
+        val isTimeout = ex.message?.contains("timeout", ignoreCase = true) == true
+        val kind = if (isTimeout) SentinelApiErrorKind.TIMEOUT else SentinelApiErrorKind.NETWORK
+        val message = if (isTimeout) {
+            "The request timed out while contacting the SentinelAI backend"
+        } else {
+            "Unable to reach the SentinelAI backend"
+        }
+        return SentinelApiException(kind = kind, message = message, cause = ex)
+    }
+
+    private fun SentinelApiException.attachBackendDetails(errorBody: String): SentinelApiException {
+        if (errorBody.isBlank()) return this
+        // We avoid logging or exposing full payloads; only a short summary is attached for visibility.
+        val condensedMessage = listOfNotNull(this.message, errorBody.take(200)).joinToString(separator = ": ")
+        return SentinelApiException(
+            kind = this.kind,
+            message = condensedMessage,
+            cause = this.cause,
+            statusCode = this.statusCode,
+        )
     }
 }
