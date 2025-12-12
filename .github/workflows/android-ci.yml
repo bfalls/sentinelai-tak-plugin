@@ -29,11 +29,7 @@ jobs:
         uses: gradle/actions/wrapper-validation@v3
 
       - name: Build (assemble debug)
-        run: |
-          echo "=== Gradle-related env ==="
-          env | sort | grep -i gradle || true
-          env | sort | grep -i java || true
-          ./gradlew :app:assembleDebug --no-daemon
+        run: ./gradlew :app:assembleDebug --no-daemon
 
       - name: Run unit tests
         run: ./gradlew :app:testDebugUnitTest --no-daemon
