@@ -10,6 +10,10 @@
     <string name="sentinel_timeout_label">Request timeout (seconds)</string>
     <string name="sentinel_timeout_hint">Defaults to 45 seconds</string>
     <string name="sentinel_debug_label">Enable debug logging</string>
+    <string name="sentinel_test_connection">Test connection</string>
+    <string name="sentinel_test_connection_success">Connection successful.</string>
+    <string name="sentinel_test_connection_failure">Connection failed: %1$s</string>
+    <string name="sentinel_testing_connection">Testing connection…</string>
     <string name="sentinel_save">Save</string>
     <string name="sentinel_cancel">Cancel</string>
     <string name="sentinel_settings_saved">Settings saved</string>
@@ -30,6 +34,10 @@
     <string name="mission_analysis_analyzing">Analyzing…</string>
     <string name="mission_analysis_status_completed">Completed</string>
     <string name="mission_analysis_status_failed">Failed</string>
+    <string name="mission_analysis_error_config">Backend settings are missing or invalid. Please update the SentinelAI settings.</string>
+    <string name="mission_analysis_error_network">Unable to reach the SentinelAI backend. Check connectivity and try again.</string>
+    <string name="mission_analysis_error_backend">SentinelAI backend returned an error. Please try again in a moment.</string>
+    <string name="mission_analysis_error_timeout">The request took too long. Try a shorter time window or test the connection.</string>
     <string name="mission_analysis_error_missing_question">Please enter a question for SentinelAI.</string>
     <string name="mission_analysis_placeholder_notes">Mission notes placeholder</string>
     <string name="mission_analysis_placeholder_location">Current map center placeholder</string>
