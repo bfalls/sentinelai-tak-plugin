@@ -1,5 +1,6 @@
 package com.sentinelai.tak.plugin
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -30,6 +31,11 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.menu_sentinel_ai -> {
                 Toast.makeText(this, R.string.sentinel_ai_menu_selected, Toast.LENGTH_SHORT).show()
+                true
+            }
+
+            R.id.menu_sentinel_settings -> {
+                startActivity(Intent(this, SentinelSettingsActivity::class.java))
                 true
             }
 
