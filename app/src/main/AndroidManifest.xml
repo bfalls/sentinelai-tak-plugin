@@ -10,6 +10,11 @@
         android:theme="@style/Theme.SentinelAI">
 
         <activity
+            android:name="com.sentinelai.tak.plugin.SentinelSettingsActivity"
+            android:exported="false"
+            android:label="@string/sentinel_settings_title" />
+
+        <activity
             android:name="com.sentinelai.tak.plugin.MainActivity"
             android:exported="true">
             <intent-filter>

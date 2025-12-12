@@ -4,4 +4,9 @@
         android:id="@+id/menu_sentinel_ai"
         android:title="@string/sentinel_ai_menu_title"
         android:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_sentinel_settings"
+        android:title="@string/sentinel_settings_menu_title"
+        android:showAsAction="never" />
 </menu>

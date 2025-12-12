@@ -3,4 +3,15 @@
     <string name="sentinel_ai_menu_title">SentinelAI</string>
     <string name="sentinel_ai_placeholder_message">SentinelAI plugin placeholder UI. Configure TAK integration and backend connectivity in future phases.</string>
     <string name="sentinel_ai_menu_selected">SentinelAI menu selected</string>
+    <string name="sentinel_settings_menu_title">SentinelAI Settings</string>
+    <string name="sentinel_settings_title">SentinelAI Settings</string>
+    <string name="sentinel_backend_url_label">Backend URL</string>
+    <string name="sentinel_api_key_label">API Key</string>
+    <string name="sentinel_timeout_label">Request timeout (seconds)</string>
+    <string name="sentinel_timeout_hint">Defaults to 45 seconds</string>
+    <string name="sentinel_debug_label">Enable debug logging</string>
+    <string name="sentinel_save">Save</string>
+    <string name="sentinel_cancel">Cancel</string>
+    <string name="sentinel_settings_saved">Settings saved</string>
+    <string name="sentinel_timeout_validation_error">Please enter a valid timeout (seconds)</string>
 </resources>
