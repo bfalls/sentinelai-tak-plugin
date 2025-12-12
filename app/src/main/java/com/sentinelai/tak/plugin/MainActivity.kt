@@ -4,9 +4,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.commit
 import com.sentinelai.tak.plugin.databinding.ActivityMainBinding
+import com.sentinelai.tak.plugin.mission.MissionAnalysisFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,7 +20,12 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
-        binding.statusMessage.text = getString(R.string.sentinel_ai_placeholder_message)
+
+        if (savedInstanceState == null) {
+            supportFragmentManager.commit {
+                replace(binding.fragmentContainer.id, MissionAnalysisFragment.newInstance())
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -30,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_sentinel_ai -> {
-                Toast.makeText(this, R.string.sentinel_ai_menu_selected, Toast.LENGTH_SHORT).show()
+                // Fragment is already visible; no-op for now.
                 true
             }
 
