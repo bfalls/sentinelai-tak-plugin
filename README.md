@@ -1,35 +1,144 @@
-# SentinelAI TAK Plugin
+<p align="center">
+  <img src="docs/sentinelai-banner.png" alt="SentinelAI for CivTAK" width="100%">
+</p>
 
-## Goal for Phase 8
-Make the plugin production-ready with tests, cleanup, and documentation that guide CivTAK/ATAK users through configuration and mission analysis workflows.
+# SentinelAI for CivTAK
+
+**AI-powered mission analysis, embedded directly in CivTAK.**
+
+SentinelAI is an Android plugin for CivTAK that delivers fast, structured, AI-assisted mission analysis inside the TAK environment. It enables operators and analysts to ask natural-language questions about an operational context and receive concise summaries, risks, and actionable recommendations — without leaving CivTAK.
+
+---
+
+## Why SentinelAI
+
+Modern missions generate more data than a human can synthesize in real time. SentinelAI acts as an analysis copilot, turning mission context into clarity.
+
+- Reduce cognitive load during operations
+- Surface risks early
+- Provide structured, explainable outputs
+- Keep sensitive workflows off the device and under your control
+
+---
+
+## Key Capabilities
+
+- **Mission Analysis Panel**
+  - Ask free-form questions about a mission
+  - Chat-style history of analysis requests and responses
+
+- **Context-Aware Requests**
+  - Time window selection
+  - Location and signal context
+  - Mission notes and metadata
+
+- **Clear Outputs**
+  - Intent classification
+  - Executive summary
+  - Risk list
+  - Actionable recommendations
+
+- **Secure by Design**
+  - No AI models or credentials embedded in the APK
+  - Plugin communicates only with a backend service you control
+  - Suitable for on-prem or controlled cloud deployments
+
+---
+
+## Architecture Overview
+
+```
+CivTAK (Android Plugin)
+        |
+        | HTTPS (JSON)
+        v
+SentinelAI Backend (FastAPI)
+        |
+        | AI / Analysis Engine
+        v
+Structured Mission Intelligence
+```
+
+- **Android plugin**: UI, configuration, context collection
+- **Backend service**: AI orchestration, policy enforcement, model integration
+
+---
+
+## Development & Testing
+
+### Standalone App Mode
+The plugin can run as a standard Android app for development and testing.
+
+- Works on Android emulators
+- No CivTAK installation required (may not be supported anyway)
+- Ideal for UI, networking, and backend validation
+
+### CivTAK Plugin Mode
+- Install alongside CivTAK on a real device
+- Plugin UI integrates into CivTAK menus
+- Context hooks (markers, map extent) enabled when running in-host
+
+---
 
 ## Configuration
-1. Open the SentinelAI settings screen from the plugin menu.
-2. Enter the SentinelAI backend URL (e.g., `https://10.0.2.2:8000` for local emulator access) and the shared API key issued by the backend operator.
-3. Adjust the request timeout (default: 45 seconds) if the network link is slow.
-4. Optionally enable debug logging for additional diagnostics.
-5. Tap **Save**. The values are stored in SharedPreferences for reuse on next launch.
-6. Use **Test Connection** (calls `/healthz`) to verify connectivity before sending mission analysis requests.
 
-## Mission Analysis Usage
-- Open the **Mission Analysis** panel from the toolbar or plugin menu.
-- Provide a question or instruction for SentinelAI (e.g., "Summarize activity near the convoy").
-- Choose which context to include:
-  - **Selected markers**: attach map marker metadata and observations.
-  - **Map extent**: include the current map view center and extent description.
-  - **Mission notes**: append mission notes if available from TAK.
-- Select a **time window** (start/end) relevant to the request.
-- Submit to send a `MissionAnalysisRequest` to `/api/v1/analysis/mission`.
-- The response displays the backend-selected intent, summary, risks, and recommendations.
+All configuration is managed locally on the device via the SentinelAI Settings screen:
 
-## Marker Context-Menu Usage
-- Long-press or select a marker on the map.
-- Choose **Ask SentinelAI about this marker** from the context menu.
-- Optionally refine the question and time window before submitting.
-- The marker’s metadata is attached as a `MARKER_CONTEXT` signal in the mission analysis payload.
+- Backend URL
+- API key
+- Request timeout
+- Debug logging toggle
 
-## Known Limitations
-- TAK SDK integration points are placeholders; host platforms must wire plugin lifecycle hooks and register context menus.
-- No offline queuing—requests require connectivity when submitted.
-- The plugin depends on the SentinelAI backend for all analysis and intent selection; it does not perform on-device AI processing.
-- Only HTTPS endpoints are supported; ensure certificates are trusted by the device.
+No configuration is hard-coded into the application.
+
+---
+
+## Security Model
+
+- No direct LLM access from the device
+- All requests are routed through a backend you own
+- No sensitive mission data is persisted by default
+- Designed to support air-gapped or restricted environments
+
+---
+
+## Technology Stack
+
+### Android Plugin
+- Kotlin
+- AndroidX
+- OkHttp
+- Coroutines
+- Moshi / Gson
+
+### Backend
+- Python
+- FastAPI
+- Pydantic
+- Provider-agnostic AI integration
+
+---
+
+## Status
+
+SentinelAI is currently in **active development** and suitable for:
+
+- Technical demos
+- Internal evaluations
+- Controlled pilot deployments
+
+---
+
+## License
+
+Apache License 2.0
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+
+---
+
+## Contact
+
+For demos, integration discussions, or questions, contact:
+
+**SentinelAI Team**
