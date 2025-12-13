@@ -1,0 +1,81 @@
+name: Release APKs
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  JAVA_VERSION: 17
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: Build Debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Build Release APK
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Determine release identifier
+        id: release_name
+        run: |
+          if [ -n "${GITHUB_REF_NAME}" ]; then
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare APK artifacts
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-debug.apk"
+          cp app/build/outputs/apk/release/app-release.apk "sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-release.apk"
+
+      - name: Upload Debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinelai-civtak-plugin-debug-apk
+          path: sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-debug.apk
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinelai-civtak-plugin-release-apk
+          path: sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-release.apk
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-debug.apk
+            sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-release.apk
+          generate_release_notes: true
+          body: |
+            Debug APK: For development and testing.
+            Release APK: Recommended for evaluation (unsigned if applicable).

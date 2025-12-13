@@ -129,6 +129,15 @@ SentinelAI is currently in **active development** and suitable for:
 
 ---
 
+## Download
+
+The latest builds are published on the [GitHub Releases page](../../releases/latest).
+
+- **Release APK**: Recommended for evaluations and general testing (unsigned if no signing keys are configured).
+- **Debug APK**: Provided for development and troubleshooting.
+
+---
+
 ## License
 
 Apache License 2.0

@@ -28,8 +28,14 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
 
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
       - name: Build (assemble debug)
         run: ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest --no-daemon
+      - name: Upload Debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinelai-civtak-plugin-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
