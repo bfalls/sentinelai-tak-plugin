@@ -16,7 +16,6 @@ class SentinelAiPlugin(
 ) {
 
     fun initialize(context: Context) {
-        // TODO: Wire into CivTAK/ATAK plugin SDK lifecycle hooks
         Log.i(TAG, "SentinelAI plugin initialized with context: ${'$'}{context.packageName}")
 
         markerMenuHost?.let {
