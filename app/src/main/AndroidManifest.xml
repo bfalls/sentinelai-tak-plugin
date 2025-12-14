@@ -11,6 +11,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SentinelAI">
 
+        <service
+            android:name=".SentinelAiPluginService"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="com.atakmap.android.PLUGIN" />
+                <action android:name="com.atakmap.android.plugin.SERVICE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="pluginName"
+                android:value="SentinelAI" />
+
+            <meta-data
+                android:name="pluginDescription"
+                android:value="Mission analysis powered by live signals and contextual intelligence." />
+
+            <meta-data
+                android:name="pluginVersion"
+                android:value="0.1.1" />
+        </service>
+
         <activity
             android:name="com.sentinelai.tak.plugin.SentinelSettingsActivity"
             android:exported="false"
