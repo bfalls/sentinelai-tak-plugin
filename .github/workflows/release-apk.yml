@@ -53,8 +53,20 @@ jobs:
 
       - name: Prepare APK artifacts
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk "sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-debug.apk"
-          cp app/build/outputs/apk/release/app-release.apk "sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-release.apk"
+          set -euo pipefail
+
+          DEBUG_APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          # Release APK filename varies (signed vs unsigned)
+          RELEASE_DIR="app/build/outputs/apk/release"
+          ls -la app/build/outputs/apk/release || true
+          RELEASE_APK="$(ls -1 ${RELEASE_DIR}/*.apk | head -n 1)"
+
+          echo "Using debug apk:   ${DEBUG_APK}"
+          echo "Using release apk: ${RELEASE_APK}"
+
+          cp "${DEBUG_APK}" "sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-debug.apk"
+          cp "${RELEASE_APK}" "sentinelai-civtak-plugin-${{ steps.release_name.outputs.name }}-release.apk"
 
       - name: Upload Debug APK artifact
         uses: actions/upload-artifact@v4
