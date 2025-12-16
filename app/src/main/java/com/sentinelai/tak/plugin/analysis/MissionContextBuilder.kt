@@ -3,6 +3,9 @@ package com.sentinelai.tak.plugin.analysis
 import com.sentinelai.tak.plugin.context.MapViewContext
 import com.sentinelai.tak.plugin.context.MarkerContext
 import com.sentinelai.tak.plugin.context.TakContextProvider
+import com.sentinelai.tak.plugin.location.CivTakLocation
+import com.sentinelai.tak.plugin.location.CivTakLocationProvider
+import com.sentinelai.tak.plugin.location.OwnshipLocationProvider
 import com.sentinelai.tak.plugin.network.dto.JsonMap
 import com.sentinelai.tak.plugin.network.dto.LocationDto
 import com.sentinelai.tak.plugin.network.dto.MissionAnalysisRequestDto
@@ -19,6 +22,7 @@ import java.time.format.DateTimeFormatter
  */
 class MissionContextBuilder(
     private val takContextProvider: TakContextProvider,
+    private val locationProvider: OwnshipLocationProvider = CivTakLocationProvider(),
     private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME,
     private val clock: Clock = Clock.systemUTC(),
 ) {
@@ -71,11 +75,12 @@ class MissionContextBuilder(
 
         val notes = if (includeMissionNotes) takContextProvider.getMissionNotes() else null
 
-        val location = when {
-            markers.isNotEmpty() -> markerLocation(markers.first())
-            includeMapExtent -> takContextProvider.getMapView()?.let { mapViewLocation(it) }
-            else -> null
-        }
+        val location = locationProvider.getCurrentLocation()?.let { ownshipLocation(it) }
+            ?: when {
+                markers.isNotEmpty() -> markerLocation(markers.first())
+                includeMapExtent -> takContextProvider.getMapView()?.let { mapViewLocation(it) }
+                else -> null
+            }
 
         val timeWindowDto = TimeWindowDto(
             start = formatter.format(timeWindow.start),
@@ -125,6 +130,16 @@ class MissionContextBuilder(
 
     private fun markerSignature(marker: MarkerContext): String =
         listOf(marker.id, marker.latitude, marker.longitude).joinToString(":")
+
+    private fun ownshipLocation(location: CivTakLocation): LocationDto =
+        LocationDto(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            altitudeMeters = location.altitudeMeters,
+            description = "Ownship",
+            horizontalSource = location.horizontalSource,
+            verticalSource = location.verticalSource,
+        )
 
     private fun markerLocation(marker: MarkerContext): LocationDto =
         LocationDto(

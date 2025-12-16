@@ -78,6 +78,10 @@ The plugin can run as a standard Android app for development and testing.
 - Plugin UI integrates into CivTAK menus
 - Context hooks (markers, map extent) enabled when running in-host
 
+#### Manual validation: CivTAK location in mission analysis
+- Open the Mission Analysis panel and submit a question.
+- Inspect logcat for `CivTakLocationProvider` to confirm the ownship fix is read and attached to the payload.
+
 ---
 
 ## Configuration
