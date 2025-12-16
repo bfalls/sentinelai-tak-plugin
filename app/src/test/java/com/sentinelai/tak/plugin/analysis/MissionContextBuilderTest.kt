@@ -48,6 +48,7 @@ class MissionContextBuilderTest {
 
         val builder = MissionContextBuilder(
             takContextProvider = takProvider,
+            locationProvider = FakeOwnshipLocationProvider(),
             formatter = formatter,
             clock = fixedClock,
         )
@@ -111,6 +112,7 @@ class MissionContextBuilderTest {
 
         val builder = MissionContextBuilder(
             takContextProvider = takProvider,
+            locationProvider = FakeOwnshipLocationProvider(),
             formatter = formatter,
             clock = fixedClock,
         )
@@ -138,6 +140,69 @@ class MissionContextBuilderTest {
         assertEquals(12.34, request.location?.latitude)
         assertEquals(56.78, request.location?.longitude)
         assertEquals("Cursor extent", request.location?.description)
+    }
+
+    @Test
+    fun `uses CivTAK ownship location when available`() {
+        val takProvider = FakeTakContextProvider(
+            missionId = "mission-99",
+            missionMetadata = mutableMapOf("priority" to "MEDIUM"),
+            missionNotes = null,
+            mapViewContext = null,
+            selectedMarkers = emptyList(),
+        )
+
+        val builder = MissionContextBuilder(
+            takContextProvider = takProvider,
+            locationProvider = FakeOwnshipLocationProvider(
+                OwnshipLocation(latitude = 1.0, longitude = 2.0, altitudeMeters = 300.0),
+            ),
+            formatter = formatter,
+            clock = fixedClock,
+        )
+
+        val timeWindow = MissionTimeWindow(
+            start = OffsetDateTime.parse("2024-03-01T10:00:00Z"),
+            end = OffsetDateTime.parse("2024-03-01T12:00:00Z"),
+        )
+
+        val request = builder.buildMissionAnalysisRequest(
+            question = "Ownship first",
+            includeSelectedMarkers = true,
+            includeMapExtent = true,
+            includeMissionNotes = false,
+            timeWindow = timeWindow,
+            selectedMarkers = emptyList(),
+            source = "unit-test",
+        )
+
+        assertEquals(1.0, request.location?.latitude)
+        assertEquals(2.0, request.location?.longitude)
+        assertEquals(300.0, request.location?.altitudeMeters)
+        assertEquals("Ownship", request.location?.description)
+    }
+
+    private data class OwnshipLocation(
+        val latitude: Double,
+        val longitude: Double,
+        val altitudeMeters: Double? = null,
+    )
+
+    /**
+     * Test-only provider to inject deterministic ownship fixes into MissionContextBuilder
+     * without touching the production CivTAK-backed provider.
+     */
+    private class FakeOwnshipLocationProvider(
+        private val ownshipLocation: OwnshipLocation? = null,
+    ) : com.sentinelai.tak.plugin.location.OwnshipLocationProvider {
+        override fun getCurrentLocation(): com.sentinelai.tak.plugin.location.CivTakLocation? =
+            ownshipLocation?.let {
+                com.sentinelai.tak.plugin.location.CivTakLocation(
+                    latitude = it.latitude,
+                    longitude = it.longitude,
+                    altitudeMeters = it.altitudeMeters,
+                )
+            }
     }
 
     private class FakeTakContextProvider(

@@ -17,7 +17,10 @@ data class SignalDto(
 data class LocationDto(
     @Json(name = "latitude") val latitude: Double,
     @Json(name = "longitude") val longitude: Double,
+    @Json(name = "altitude_meters") val altitudeMeters: Double? = null,
     @Json(name = "description") val description: String? = null,
+    @Json(name = "horizontal_source") val horizontalSource: String? = null,
+    @Json(name = "vertical_source") val verticalSource: String? = null,
 )
 
 data class TimeWindowDto(
