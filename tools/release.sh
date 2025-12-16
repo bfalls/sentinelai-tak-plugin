@@ -12,6 +12,9 @@ fi
 VER="$1"
 TAG="v$VER"
 FILE="app/build.gradle.kts"
+PLUGIN_XML="app/src/main/assets/plugin.xml"
+
+[[ -f "$PLUGIN_XML" ]] || { echo "plugin.xml missing, fix this"; exit 1; }
 
 if [[ ! "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "Version must look like X.Y.Z (example: 0.1.1)"
@@ -57,11 +60,19 @@ echo "  versionCode -> $NEXT_CODE"
 # Update versionName + versionCode (in-place)
 perl -0777 -i -pe "s/versionName\s*=\s*\"[^\"]+\"/versionName = \"$VER\"/g; s/versionCode\s*=\s*\d+/versionCode = $NEXT_CODE/g" "$FILE"
 
+# Update plugin.xml version (if present)
+if [[ -f "$PLUGIN_XML" ]]; then
+  perl -0777 -i -pe "s/(<plugin[^>]*version=\")([^\"]+)(\")/\$1$VER\$3/" "$PLUGIN_XML"
+  echo "  plugin.xml version -> $VER"
+else
+  echo "WARNING: $PLUGIN_XML not found; plugin.xml version not updated"
+fi
+
 # Optional: local preflight build (recommended)
 ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease --no-daemon
 
 # Commit + push
-git add "$FILE"
+git add "$FILE" "$PLUGIN_XML"
 git commit -m "Bump version to $VER"
 git push origin main
 

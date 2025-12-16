@@ -84,6 +84,19 @@ The plugin can run as a standard Android app for development and testing.
 
 ---
 
+## Installation
+### Download
+On your mobile device, browse to the Releases section of this repo.
+Find the release and tap on the debug or release link in the Assets section.
+
+Download latest here: [![Download APK](https://img.shields.io/github/v/release/bfalls/sentinelai-tak-plugin?label=Download%20APK)](https://github.com/bfalls/sentinelai-tak-plugin/releases/latest)
+
+### Install
+On Android (do one of the following)
+- Tap the download notification
+- Open Files / My Files → Downloads
+- Tap the APK from the browser’s download list
+
 ## Configuration
 
 All configuration is managed locally on the device via the SentinelAI Settings screen:
